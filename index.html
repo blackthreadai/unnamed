@@ -76,7 +76,7 @@ body::after {
   0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(0,230,118,0.4), 0 0 20px rgba(0,230,118,0.4); }
   50% { opacity: 0.4; box-shadow: 0 0 4px rgba(0,230,118,0.4); }
 }
-.status-bar span { color: var(--text-muted); text-transform: uppercase; }
+.status-bar span { color: var(--text-muted); text-transform: uppercase; text-align: center; white-space: nowrap; }
 .status-bar span strong { color: #00e676; font-weight: 500; text-shadow: 0 0 10px rgba(0,230,118,0.4); }
 
 /* HERO */
@@ -395,10 +395,29 @@ body::after {
   100% { transform: translateY(-10vh); opacity: 0; }
 }
 
-@media (max-width: 600px) {
-  .step { grid-template-columns: 1fr; gap: 12px; }
+@media (max-width: 768px) {
+  .status-bar {
+    padding: 10px 16px;
+    font-size: 11px;
+    gap: 8px;
+    flex-wrap: wrap;
+    text-align: center;
+  }
+  .hero { padding: 100px 20px 60px; }
+  .hero h1 { font-size: 2rem; }
+  .hero p { font-size: 0.95rem; padding: 0 8px; }
+  .protocol { padding: 60px 16px; }
+  .protocol h2 { font-size: 1.5rem; margin-bottom: 40px; }
+  .step { grid-template-columns: 1fr; gap: 12px; padding: 24px; }
   .step-number { font-size: 24px; }
+  .submit-section { padding: 60px 16px 80px; }
   .form-card { padding: 24px; }
+  .hero-cta { padding: 14px 28px; font-size: 14px; }
+}
+
+@media (max-width: 380px) {
+  .status-bar { font-size: 10px; padding: 8px 12px; }
+  .hero h1 { font-size: 1.7rem; }
 }
 </style>
 </head>
