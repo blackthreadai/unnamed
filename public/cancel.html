@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build My Idea — Cancelled</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #050a0e; --surface: #0a1218; --border: #0f2a3a; --text: #e0f0f8;
+  --text-muted: #5a8a9a; --accent: #00e5ff; --teal: #00bfa5; --glow: rgba(0,229,255,0.4);
+}
+html { overflow-x: hidden; }
+body {
+  font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  -webkit-font-smoothing: antialiased;
+}
+#matrix-bg {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 0; opacity: 0.07; pointer-events: none;
+}
+body::after {
+  content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,229,255,0.015) 2px, rgba(0,229,255,0.015) 4px);
+  pointer-events: none; z-index: 1;
+}
+.card {
+  position: relative; z-index: 2; max-width: 600px; margin: 24px;
+  padding: 60px 48px; text-align: center;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+}
+.card::before {
+  content: ''; position: absolute; top: -1px; left: 20%; right: 20%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+.icon {
+  width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 32px;
+  border: 2px solid var(--text-muted); display: flex; align-items: center; justify-content: center;
+}
+.icon svg { width: 36px; height: 36px; color: var(--text-muted); }
+h1 { font-size: 2rem; font-weight: 700; margin-bottom: 16px; letter-spacing: -0.02em; }
+p { color: var(--text-muted); line-height: 1.7; margin-bottom: 12px; }
+a.cta {
+  display: inline-flex; align-items: center; gap: 10px; margin-top: 28px;
+  padding: 14px 32px; color: var(--accent); font-weight: 600; font-size: 15px;
+  border: 1px solid var(--accent); border-radius: 60px; text-decoration: none;
+  transition: all 0.3s;
+}
+a.cta:hover { background: rgba(0,229,255,0.1); box-shadow: 0 0 30px rgba(0,229,255,0.3); }
+@media (max-width: 600px) { .card { padding: 40px 24px; } h1 { font-size: 1.5rem; } }
+</style>
+</head>
+<body>
+<canvas id="matrix-bg"></canvas>
+<div class="card">
+  <div class="icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+  </div>
+  <h1>Build Sequence Aborted</h1>
+  <p>No worries — no charge was made. Your idea is still saved. Come back whenever you're ready to build.</p>
+  <a href="/#submit" class="cta">Try Again →</a>
+</div>
+<script>
+const canvas = document.getElementById('matrix-bg');
+const ctx = canvas.getContext('2d');
+canvas.width = innerWidth; canvas.height = innerHeight;
+const chars = 'アイウエオカキクケコ01'; const fontSize = 14;
+const columns = Math.floor(canvas.width / fontSize);
+const drops = Array(columns).fill(1);
+function draw() {
+  ctx.fillStyle = 'rgba(5,10,14,0.1)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#00e5ff'; ctx.font = fontSize + 'px monospace';
+  for (let i = 0; i < drops.length; i++) {
+    ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * fontSize, drops[i] * fontSize);
+    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+    drops[i]++;
+  }
+}
+setInterval(draw, 50);
+addEventListener('resize', () => { canvas.width = innerWidth; canvas.height = innerHeight; });
+</script>
+</body>
+</html>

@@ -543,23 +543,41 @@ for (let i = 0; i < 20; i++) {
   document.body.appendChild(p);
 }
 
-// Form
-document.getElementById('ideaForm').addEventListener('submit', function(e) {
+// Form — Stripe Checkout
+document.getElementById('ideaForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   const btn = this.querySelector('.submit-btn');
-  btn.textContent = '✓ IDEA RECEIVED — SEQUENCE INITIATED';
-  btn.style.background = 'rgba(0,229,255,0.15)';
-  btn.style.color = 'var(--accent)';
-  btn.style.border = '1px solid var(--accent)';
+  const idea = document.getElementById('idea').value;
+  const email = document.getElementById('email').value;
+
+  btn.textContent = 'INITIALIZING...';
   btn.disabled = true;
-  setTimeout(() => {
-    btn.textContent = 'Initialize Build Sequence →';
-    btn.style.background = '';
-    btn.style.color = '';
-    btn.style.border = '';
-    btn.disabled = false;
-    this.reset();
-  }, 3000);
+
+  try {
+    const res = await fetch('/api/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idea, email })
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error(data.error || 'Failed to create checkout session');
+    }
+  } catch (err) {
+    btn.textContent = 'ERROR — TRY AGAIN';
+    btn.style.background = 'rgba(255,50,50,0.2)';
+    btn.style.color = '#ff5252';
+    btn.style.border = '1px solid #ff5252';
+    setTimeout(() => {
+      btn.textContent = 'Initialize Build Sequence →';
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.style.border = '';
+      btn.disabled = false;
+    }, 3000);
+  }
 });
 </script>
 </body>
