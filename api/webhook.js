@@ -1,7 +1,12 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const { kv } = require('@vercel/kv');
+const Redis = require('ioredis');
 
-// Disable body parsing — Stripe needs the raw body for signature verification
+let redis;
+function getRedis() {
+  if (!redis) redis = new Redis(process.env.REDIS_URL, { tls: { rejectUnauthorized: false } });
+  return redis;
+}
+
 module.exports.config = {
   api: { bodyParser: false }
 };
@@ -36,26 +41,17 @@ module.exports = async function handler(req, res) {
     const submissionId = session.metadata?.submissionId;
 
     if (submissionId) {
-      // Update submission status to paid
-      await kv.hset(`submission:${submissionId}`, {
-        status: 'paid',
-        paidAt: new Date().toISOString(),
-        stripePaymentIntent: session.payment_intent,
-        amountPaid: session.amount_total
-      });
+      const kv = getRedis();
+      await kv.hset(`submission:${submissionId}`,
+        'status', 'paid',
+        'paidAt', new Date().toISOString(),
+        'stripePaymentIntent', session.payment_intent || '',
+        'amountPaid', String(session.amount_total || 0)
+      );
 
       console.log(`✅ Submission ${submissionId} marked as paid`);
 
       // TODO: Send email notification via Resend (resend.com)
-      // Example:
-      // const { Resend } = require('resend');
-      // const resend = new Resend(process.env.RESEND_API_KEY);
-      // await resend.emails.send({
-      //   from: 'BuildMyIdea <noreply@yourdomain.com>',
-      //   to: [session.customer_email, 'you@yourdomain.com'],
-      //   subject: 'Build My Idea — Payment Received',
-      //   html: `<p>Your idea is in the queue! We'll be in touch within 24 hours.</p>`
-      // });
     }
   }
 

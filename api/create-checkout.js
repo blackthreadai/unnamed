@@ -1,5 +1,11 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const { kv } = require('@vercel/kv');
+const Redis = require('ioredis');
+
+let redis;
+function getRedis() {
+  if (!redis) redis = new Redis(process.env.REDIS_URL, { tls: { rejectUnauthorized: false } });
+  return redis;
+}
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -13,37 +19,35 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Idea and email are required' });
     }
 
-    // Generate a submission ID
+    const kv = getRedis();
     const submissionId = `sub_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
-    // Store submission in Vercel KV
-    await kv.hset(`submission:${submissionId}`, {
-      id: submissionId,
-      idea,
-      email,
-      status: 'pending',
-      createdAt: new Date().toISOString()
-    });
+    // Store submission
+    await kv.hset(`submission:${submissionId}`,
+      'id', submissionId,
+      'idea', idea,
+      'email', email,
+      'status', 'pending',
+      'createdAt', new Date().toISOString()
+    );
 
     // Add to submissions index
     await kv.lpush('submissions:list', submissionId);
 
     const siteUrl = process.env.SITE_URL || 'https://unnamed-mocha.vercel.app';
 
-    // Create Stripe Checkout session
     const sessionParams = {
       payment_method_types: ['card'],
       customer_email: email,
       metadata: {
         submissionId,
-        idea: idea.substring(0, 500) // Stripe metadata limit
+        idea: idea.substring(0, 500)
       },
       success_url: `${siteUrl}/success.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/cancel.html`,
       mode: 'payment'
     };
 
-    // Use STRIPE_PRICE_ID if set, otherwise create a one-time price
     if (process.env.STRIPE_PRICE_ID) {
       sessionParams.line_items = [{
         price: process.env.STRIPE_PRICE_ID,
@@ -57,7 +61,7 @@ module.exports = async function handler(req, res) {
             name: 'Build My Idea — 7-Day AI Build',
             description: 'Custom AI-powered product build. Code, IP, everything — yours.'
           },
-          unit_amount: 150000 // $1,500.00
+          unit_amount: 150000
         },
         quantity: 1
       }];
@@ -65,10 +69,7 @@ module.exports = async function handler(req, res) {
 
     const session = await stripe.checkout.sessions.create(sessionParams);
 
-    // Store Stripe session ID on submission
-    await kv.hset(`submission:${submissionId}`, {
-      stripeSessionId: session.id
-    });
+    await kv.hset(`submission:${submissionId}`, 'stripeSessionId', session.id);
 
     return res.status(200).json({ url: session.url });
   } catch (err) {
