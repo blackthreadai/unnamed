@@ -1,11 +1,5 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const Redis = require('ioredis');
-
-let redis;
-function getRedis() {
-  if (!redis) redis = new Redis(process.env.REDIS_URL, { tls: { rejectUnauthorized: false } });
-  return redis;
-}
+const { getRedis } = require('./_redis');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -23,13 +17,13 @@ module.exports = async function handler(req, res) {
     const submissionId = `sub_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
     // Store submission
-    await kv.hset(`submission:${submissionId}`,
-      'id', submissionId,
-      'idea', idea,
-      'email', email,
-      'status', 'pending',
-      'createdAt', new Date().toISOString()
-    );
+    await kv.hset(`submission:${submissionId}`, {
+      id: submissionId,
+      idea,
+      email,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    });
 
     // Add to submissions index
     await kv.lpush('submissions:list', submissionId);
@@ -69,7 +63,7 @@ module.exports = async function handler(req, res) {
 
     const session = await stripe.checkout.sessions.create(sessionParams);
 
-    await kv.hset(`submission:${submissionId}`, 'stripeSessionId', session.id);
+    await kv.hset(`submission:${submissionId}`, { stripeSessionId: session.id });
 
     return res.status(200).json({ url: session.url });
   } catch (err) {

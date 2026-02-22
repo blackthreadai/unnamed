@@ -1,10 +1,4 @@
-const Redis = require('ioredis');
-
-let redis;
-function getRedis() {
-  if (!redis) redis = new Redis(process.env.REDIS_URL, { tls: { rejectUnauthorized: false } });
-  return redis;
-}
+const { getRedis } = require('./_redis');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {

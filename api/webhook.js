@@ -1,11 +1,5 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const Redis = require('ioredis');
-
-let redis;
-function getRedis() {
-  if (!redis) redis = new Redis(process.env.REDIS_URL, { tls: { rejectUnauthorized: false } });
-  return redis;
-}
+const { getRedis } = require('./_redis');
 
 module.exports.config = {
   api: { bodyParser: false }
@@ -42,16 +36,14 @@ module.exports = async function handler(req, res) {
 
     if (submissionId) {
       const kv = getRedis();
-      await kv.hset(`submission:${submissionId}`,
-        'status', 'paid',
-        'paidAt', new Date().toISOString(),
-        'stripePaymentIntent', session.payment_intent || '',
-        'amountPaid', String(session.amount_total || 0)
-      );
+      await kv.hset(`submission:${submissionId}`, {
+        status: 'paid',
+        paidAt: new Date().toISOString(),
+        stripePaymentIntent: session.payment_intent || '',
+        amountPaid: String(session.amount_total || 0)
+      });
 
       console.log(`✅ Submission ${submissionId} marked as paid`);
-
-      // TODO: Send email notification via Resend (resend.com)
     }
   }
 
