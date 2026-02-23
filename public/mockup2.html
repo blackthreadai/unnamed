@@ -26,12 +26,25 @@ h1 {
   letter-spacing: -0.03em;
   z-index: 2;
   position: relative;
+}
+.blue {
   background: linear-gradient(135deg, #00e5ff, #00bfa5, #00e5ff);
   background-size: 200% 200%;
   animation: g 4s ease infinite;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0 0 30px rgba(0,229,255,0.4));
+}
+.white {
+  color: #e0f0f8;
+  -webkit-text-fill-color: #e0f0f8;
+}
+.tm {
+  font-size: 1.5rem;
+  color: #5a8a9a;
+  -webkit-text-fill-color: #5a8a9a;
+  vertical-align: super;
+  margin-left: 4px;
 }
 @keyframes g {
   0%,100% { background-position: 0% 50%; }
@@ -41,7 +54,7 @@ h1 {
 </head>
 <body>
 <canvas id="m"></canvas>
-<h1>BlackThread AI</h1>
+<h1><span class="blue">blackthread</span><span class="white">AI</span><sup class="tm">™</sup></h1>
 <script>
 const c=document.getElementById('m'),x=c.getContext('2d');
 c.width=innerWidth;c.height=innerHeight;
