@@ -61,7 +61,7 @@ module.exports = async function handler(req, res) {
         price_data: {
           currency: 'usd',
           product_data: {
-            name: 'Build My Idea — 7-Day AI Build',
+            name: 'BlackThread AI — 7-Day AI Build',
             description: 'Custom AI-powered product build. Code, IP, everything — yours.'
           },
           unit_amount: 150000
