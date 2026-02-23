@@ -397,6 +397,105 @@ body::after {
   100% { transform: translateY(-10vh); opacity: 0; }
 }
 
+/* PAYMENT MODAL */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(5,10,14,0.92);
+  backdrop-filter: blur(10px);
+  z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 520px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+.modal-card::before {
+  content: '';
+  position: absolute; top: -1px; left: 20%; right: 20%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+.modal-close {
+  position: absolute; top: 16px; right: 20px;
+  background: none; border: none;
+  color: var(--text-muted); font-size: 24px;
+  cursor: pointer; transition: color 0.2s;
+}
+.modal-close:hover { color: var(--text); }
+.modal-card h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; }
+.modal-sub { color: var(--text-muted); margin-bottom: 28px; font-size: 0.95rem; }
+.payment-options { display: grid; gap: 12px; }
+.payment-option {
+  display: flex; align-items: center; gap: 16px;
+  padding: 18px 20px;
+  background: rgba(0,229,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: left;
+  color: var(--text);
+  font-family: inherit;
+  width: 100%;
+}
+.payment-option:hover {
+  border-color: rgba(0,229,255,0.3);
+  background: rgba(0,229,255,0.06);
+  box-shadow: 0 0 20px rgba(0,229,255,0.08);
+}
+.payment-icon { font-size: 28px; width: 48px; text-align: center; }
+.payment-option h3 { font-size: 1rem; font-weight: 600; margin-bottom: 2px; }
+.payment-option p { font-size: 0.8rem; color: var(--text-muted); }
+.payment-arrow { margin-left: auto; color: var(--accent); font-size: 1.2rem; }
+
+/* CRYPTO PANEL */
+.crypto-info { margin-top: 24px; }
+.crypto-amount { color: var(--text); margin-bottom: 20px; font-size: 0.95rem; }
+.crypto-amount strong { color: var(--accent); }
+.wallet-group { margin-bottom: 16px; }
+.wallet-group label {
+  display: block; font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; color: var(--text-muted); margin-bottom: 6px;
+  letter-spacing: 0.05em;
+}
+.wallet-address {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px;
+  background: rgba(0,229,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.wallet-address:hover {
+  border-color: var(--accent);
+  background: rgba(0,229,255,0.06);
+}
+.wallet-address code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text);
+  word-break: break-all;
+}
+.copy-hint {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  margin-left: 10px;
+}
+.crypto-note {
+  margin-top: 16px;
+  font-size: 0.85rem;
+  color: var(--teal);
+  text-align: center;
+}
+
 @media (max-width: 768px) {
   .status-bar {
     padding: 10px 16px;
@@ -500,6 +599,55 @@ body::after {
   </div>
 </section>
 
+<!-- PAYMENT METHOD MODAL -->
+<div id="paymentModal" class="modal-overlay" style="display:none;">
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+    <h2>Choose Payment Method</h2>
+    <p class="modal-sub">Select how you'd like to pay for your build.</p>
+    <div class="payment-options">
+      <button class="payment-option" id="payCard" onclick="payWithCard()">
+        <div class="payment-icon">💳</div>
+        <div>
+          <h3>Pay with Card</h3>
+          <p>Visa, Mastercard, Amex via Stripe</p>
+        </div>
+        <span class="payment-arrow">→</span>
+      </button>
+      <button class="payment-option" id="payCrypto" onclick="showCryptoAddresses()">
+        <div class="payment-icon">₿</div>
+        <div>
+          <h3>Pay with Crypto</h3>
+          <p>BTC, ETH — manual transfer</p>
+        </div>
+        <span class="payment-arrow">→</span>
+      </button>
+    </div>
+    <!-- Crypto addresses (hidden initially) -->
+    <div id="cryptoPanel" style="display:none;">
+      <div class="crypto-info">
+        <p class="crypto-amount">Send <strong>$1,500 USD equivalent</strong> to one of the addresses below:</p>
+        <div class="wallet-group">
+          <label>// BTC</label>
+          <div class="wallet-address" onclick="copyAddress(this)">
+            <code>3Lc8kh4SiEJC4dbeGT9YwmB47awKtyhFDo</code>
+            <span class="copy-hint">click to copy</span>
+          </div>
+        </div>
+        <div class="wallet-group">
+          <label>// ETH / EVM</label>
+          <div class="wallet-address" onclick="copyAddress(this)">
+            <code>0x7cbF290fFe7602Fe283181A877Bc628f2f28Eb7F</code>
+            <span class="copy-hint">click to copy</span>
+          </div>
+        </div>
+        <button class="submit-btn" style="margin-top:24px;" onclick="submitCrypto()">I've Sent Payment →</button>
+        <p class="crypto-note">You'll receive a confirmation within 24 hours once payment is verified.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <footer class="footer">© 2026 Build My Idea. All rights reserved.</footer>
 
 <script>
@@ -543,42 +691,86 @@ for (let i = 0; i < 20; i++) {
   document.body.appendChild(p);
 }
 
-// Form — Stripe Checkout
-document.getElementById('ideaForm').addEventListener('submit', async function(e) {
+// Form — show payment modal
+let pendingIdea = '';
+let pendingEmail = '';
+
+document.getElementById('ideaForm').addEventListener('submit', function(e) {
   e.preventDefault();
-  const btn = this.querySelector('.submit-btn');
-  const idea = document.getElementById('idea').value;
-  const email = document.getElementById('email').value;
+  pendingIdea = document.getElementById('idea').value;
+  pendingEmail = document.getElementById('email').value;
+  if (!pendingIdea || !pendingEmail) return;
+  document.getElementById('paymentModal').style.display = 'flex';
+  document.getElementById('cryptoPanel').style.display = 'none';
+  document.querySelector('.payment-options').style.display = 'grid';
+});
 
-  btn.textContent = 'INITIALIZING...';
-  btn.disabled = true;
+function closeModal() {
+  document.getElementById('paymentModal').style.display = 'none';
+}
 
+// Close modal on overlay click
+document.getElementById('paymentModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// Card payment via Stripe
+async function payWithCard() {
+  const btn = document.getElementById('payCard');
+  btn.querySelector('h3').textContent = 'Redirecting to Stripe...';
   try {
     const res = await fetch('/api/create-checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idea, email })
+      body: JSON.stringify({ idea: pendingIdea, email: pendingEmail })
     });
     const data = await res.json();
     if (data.url) {
       window.location.href = data.url;
     } else {
-      throw new Error(data.error || 'Failed to create checkout session');
+      throw new Error(data.error || 'Failed');
     }
   } catch (err) {
-    btn.textContent = 'ERROR — TRY AGAIN';
-    btn.style.background = 'rgba(255,50,50,0.2)';
-    btn.style.color = '#ff5252';
-    btn.style.border = '1px solid #ff5252';
-    setTimeout(() => {
-      btn.textContent = 'Initialize Build Sequence →';
-      btn.style.background = '';
-      btn.style.color = '';
-      btn.style.border = '';
-      btn.disabled = false;
-    }, 3000);
+    btn.querySelector('h3').textContent = 'Error — try again';
+    setTimeout(() => { btn.querySelector('h3').textContent = 'Pay with Card'; }, 3000);
   }
-});
+}
+
+// Show crypto addresses
+function showCryptoAddresses() {
+  document.querySelector('.payment-options').style.display = 'none';
+  document.getElementById('cryptoPanel').style.display = 'block';
+}
+
+// Copy wallet address
+function copyAddress(el) {
+  const addr = el.querySelector('code').textContent;
+  navigator.clipboard.writeText(addr).then(() => {
+    const hint = el.querySelector('.copy-hint');
+    hint.textContent = 'copied!';
+    hint.style.color = 'var(--accent)';
+    setTimeout(() => { hint.textContent = 'click to copy'; hint.style.color = ''; }, 2000);
+  });
+}
+
+// Submit crypto payment notification
+async function submitCrypto() {
+  try {
+    const res = await fetch('/api/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idea: pendingIdea, email: pendingEmail, paymentMethod: 'crypto' })
+    });
+    document.getElementById('cryptoPanel').innerHTML =
+      '<div style="text-align:center;padding:30px 0;">' +
+      '<div style="font-size:48px;margin-bottom:16px;">✓</div>' +
+      '<h3 style="color:var(--accent);margin-bottom:8px;">Submission Received</h3>' +
+      '<p style="color:var(--text-muted);">You\'ll receive a confirmation within 24 hours once your crypto payment is verified.</p>' +
+      '</div>';
+  } catch (err) {
+    alert('Error submitting. Please try again.');
+  }
+}
 </script>
 </body>
 </html>

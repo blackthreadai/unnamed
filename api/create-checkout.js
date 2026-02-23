@@ -7,7 +7,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { idea, email } = req.body;
+    const { idea, email, paymentMethod } = req.body;
 
     if (!idea || !email) {
       return res.status(400).json({ error: 'Idea and email are required' });
@@ -27,6 +27,15 @@ module.exports = async function handler(req, res) {
 
     // Add to submissions index
     await kv.lpush('submissions:list', submissionId);
+
+    // Crypto payment — just store and confirm
+    if (paymentMethod === 'crypto') {
+      await kv.hset(`submission:${submissionId}`, {
+        status: 'pending_crypto',
+        paymentMethod: 'crypto'
+      });
+      return res.status(200).json({ success: true, message: 'Crypto submission received' });
+    }
 
     const siteUrl = process.env.SITE_URL || 'https://unnamed-mocha.vercel.app';
 
