@@ -105,6 +105,49 @@ tbody tr:hover { background: rgba(0,229,255,0.03); }
 .idea-full.open { display: block; }
 .empty { text-align: center; padding: 60px 24px; color: var(--text-muted); }
 
+.action-btn {
+  padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border); background: transparent;
+  color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  cursor: pointer; transition: all 0.2s; margin-right: 6px; text-transform: uppercase; letter-spacing: 0.05em;
+}
+.action-btn:hover { border-color: var(--accent); color: var(--accent); }
+.action-btn.delete:hover { border-color: #ff5252; color: #ff5252; }
+.actions-cell { white-space: nowrap; }
+
+/* EDIT MODAL */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(5,10,14,0.92); backdrop-filter: blur(10px);
+  z-index: 300; display: none; align-items: center; justify-content: center; padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+  padding: 36px; max-width: 560px; width: 100%; position: relative;
+}
+.modal-card::before {
+  content: ''; position: absolute; top: -1px; left: 20%; right: 20%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+.modal-card h2 { font-family: 'JetBrains Mono', monospace; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 24px; }
+.modal-card label { display: block; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+.modal-card input, .modal-card textarea, .modal-card select {
+  width: 100%; padding: 12px 14px; background: rgba(0,229,255,0.03); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); font-family: inherit; font-size: 14px; margin-bottom: 16px;
+}
+.modal-card textarea { min-height: 120px; resize: vertical; }
+.modal-card select { appearance: none; cursor: pointer; }
+.modal-card input:focus, .modal-card textarea:focus, .modal-card select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 15px rgba(0,229,255,0.1); }
+.modal-actions { display: flex; gap: 12px; margin-top: 8px; }
+.modal-actions button {
+  flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: 600; font-size: 13px;
+  cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s;
+}
+.btn-save { background: linear-gradient(135deg, var(--teal), var(--accent)); color: #050a0e; }
+.btn-save:hover { box-shadow: 0 0 20px rgba(0,229,255,0.3); }
+.btn-cancel { background: transparent; border: 1px solid var(--border) !important; color: var(--text-muted); }
+.btn-cancel:hover { border-color: var(--text) !important; color: var(--text); }
+
 @media (max-width: 768px) {
   table, thead, tbody, th, td, tr { display: block; }
   thead { display: none; }
@@ -138,9 +181,30 @@ tbody tr:hover { background: rgba(0,229,255,0.03); }
     <div class="stat-card"><div class="label">Revenue</div><div class="value" id="stat-revenue">$0</div></div>
   </div>
   <table>
-    <thead><tr><th>Date</th><th>Email</th><th>Idea</th><th>Status</th></tr></thead>
+    <thead><tr><th>Date</th><th>Email</th><th>Idea</th><th>Status</th><th>Actions</th></tr></thead>
     <tbody id="submissions-body"></tbody>
   </table>
+</div>
+
+<div class="modal-overlay" id="editModal">
+  <div class="modal-card">
+    <h2>// Edit Submission</h2>
+    <input type="hidden" id="edit-id">
+    <label>Email</label>
+    <input type="email" id="edit-email">
+    <label>Status</label>
+    <select id="edit-status">
+      <option value="pending">Pending</option>
+      <option value="pending_crypto">Pending Crypto</option>
+      <option value="paid">Paid</option>
+    </select>
+    <label>Idea</label>
+    <textarea id="edit-idea"></textarea>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+      <button class="btn-save" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -185,16 +249,78 @@ function renderSubmissions(subs) {
     tbody.innerHTML = '<tr><td colspan="4" class="empty">No submissions yet</td></tr>';
     return;
   }
+  allSubmissions = subs;
   tbody.innerHTML = subs.map((s, i) => {
     const date = new Date(s.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     const excerpt = s.idea ? (s.idea.length > 80 ? s.idea.substring(0, 80) + '…' : s.idea) : '—';
-    return `<tr onclick="this.querySelector('.idea-full').classList.toggle('open')">
+    const statusClass = s.status === 'paid' ? 'paid' : 'pending';
+    return `<tr>
       <td data-label="Date">${date}</td>
       <td data-label="Email">${s.email || '—'}</td>
-      <td data-label="Idea">${excerpt}<div class="idea-full">${s.idea || ''}</div></td>
-      <td data-label="Status"><span class="status-badge ${s.status}">${s.status}</span></td>
+      <td data-label="Idea" onclick="this.querySelector('.idea-full').classList.toggle('open')" style="cursor:pointer">${excerpt}<div class="idea-full">${s.idea || ''}</div></td>
+      <td data-label="Status"><span class="status-badge ${statusClass}">${s.status}</span></td>
+      <td data-label="Actions" class="actions-cell">
+        <button class="action-btn" onclick="openEditModal(${i})">Edit</button>
+        <button class="action-btn delete" onclick="deleteSubmission('${s.id}')">Delete</button>
+      </td>
     </tr>`;
   }).join('');
+}
+
+let allSubmissions = [];
+
+function openEditModal(index) {
+  const s = allSubmissions[index];
+  document.getElementById('edit-id').value = s.id;
+  document.getElementById('edit-email').value = s.email || '';
+  document.getElementById('edit-idea').value = s.idea || '';
+  document.getElementById('edit-status').value = s.status || 'pending';
+  document.getElementById('editModal').classList.add('open');
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('open');
+}
+
+document.getElementById('editModal').addEventListener('click', function(e) {
+  if (e.target === this) closeEditModal();
+});
+
+async function saveEdit() {
+  const id = document.getElementById('edit-id').value;
+  const email = document.getElementById('edit-email').value;
+  const idea = document.getElementById('edit-idea').value;
+  const status = document.getElementById('edit-status').value;
+
+  try {
+    const res = await fetch('/api/update-submission', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': adminPassword },
+      body: JSON.stringify({ id, email, idea, status })
+    });
+    if (res.ok) {
+      closeEditModal();
+      loadSubmissions();
+    } else {
+      alert('Failed to update submission');
+    }
+  } catch { alert('Error updating submission'); }
+}
+
+async function deleteSubmission(id) {
+  if (!confirm('Delete this submission? This cannot be undone.')) return;
+  try {
+    const res = await fetch('/api/delete-submission', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': adminPassword },
+      body: JSON.stringify({ id })
+    });
+    if (res.ok) {
+      loadSubmissions();
+    } else {
+      alert('Failed to delete submission');
+    }
+  } catch { alert('Error deleting submission'); }
 }
 
 // Matrix rain
